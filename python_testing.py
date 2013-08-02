@@ -1,4 +1,5 @@
 import traceback
+import pdb
 
 # assert that var is of vartype
 def t(vartype, var):
@@ -65,13 +66,34 @@ def takes(*args_types, **kwargs_types):
     return wrapper
 
 
+
 # acts like print, but also prints code context it was called from
 # usage: dprint(x+2): <'dprint: file file.py, function f, line 0:\n 'x+2' --> 5>
 def dprint(var):
     stack = traceback.extract_stack()
     filename, lineno, function_name, code = stack[-2]
     print('dprint: file "'+filename+'", function "'+function_name
-            +'", line #'+str(lineno)+':')
-    l_index = code.index('dprint(')+7
-    r_index = code.rindex(')')
-    print('\t"'+code[l_index : r_index]+'" --> '+str(var))
+                                        +'", line #'+str(lineno)+':')
+    if code == None: # if being executed from python shell
+        print('\t"'+str(var)+'"')
+    else: # if executed from file
+        l_index = code.index('dprint(')+7
+        r_index = code.rindex(')')
+        print('\t"'+code[l_index : r_index]+'" --> '+str(var))
+
+
+# assert that exp :: bool.  If exp is false, then print code context it was 
+# called from and start pdb
+def assertd(exp):
+    assert(isinstance(exp, bool))
+    if not exp:
+        stack = traceback.extract_stack()
+        filename, lineno, function_name, code = stack[-2]
+        print('assertd failed: file "'+filename+'" function "'
+                +function_name+'", line #'+str(lineno)+': ')
+        if code != None: # if not running from python shell
+            l_index = code.index('assertd(')+8
+            r_index = code.rindex(')')
+            print('\t"'+code[l_index : r_index]+'" --> False')
+        print('starting pdb...')
+        pdb.set_trace()
