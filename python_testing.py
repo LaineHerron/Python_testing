@@ -93,8 +93,8 @@ def assertd(exp):
 
 
 class StaticTypeHolder(object):
-    """ Creates an object with method typeof(key, keytype).  
-    Once it is called, the instance asserts that type of self.key is always keytype
+    """ Creates an object with method typeof(key, keytype). Once it is 
+    called, the instance asserts that type of self.key is always keytype
     """
     def __init__(self):
         object.__setattr__(self, 'keytypes', {})
@@ -104,7 +104,8 @@ class StaticTypeHolder(object):
         assert(isinstance(keytype, type))
         if hasattr(self, key):
             if not isinstance(eval('self.'+key), keytype):
-                raise Exception('self.'+key+' already exists and is of type '+str(type(eval('self.'+key))))
+                raise Exception(('self.'+key+' already exists and is of type '
+                                                +str(type(eval('self.'+key)))))
         self.keytypes[key] = keytype
 
     def remove_typeof(self, key):
@@ -117,14 +118,18 @@ class StaticTypeHolder(object):
     def __setattr__(self, key, val):
         if key in self.keytypes:
             if not isinstance(val, self.keytypes[key]):
-                raise Exception('self.'+key+' specified as type '+str(self.keytypes[key])+' but attempted to assign type '+str(type(val))+' with value: '+str(val))
+                raise Exception('self.'+key+' specified as type '
+                      +str(self.keytypes[key])+' but attempted to assign type '
+                                       +str(type(val))+' with value: '+str(val))
         object.__setattr__(self, key, val)
 
     def __getattribute__(self, key):
         val = object.__getattribute__(self, key)
         if key in object.__getattribute__(self, 'keytypes'):
             if not isinstance(val, self.keytypes[key]):
-                raise Exception('self.'+key+' specified as type '+str(self.keytypes[key])+' but holds type '+str(type(val))+' with value: '+str(val))
+                raise Exception('self.'+key+' specified as type '+
+                                str(self.keytypes[key])+' but holds type '+
+                                     +str(type(val))+' with value: '+str(val))
             assert(isinstance(val, self.keytypes[key]))
         return val
 
