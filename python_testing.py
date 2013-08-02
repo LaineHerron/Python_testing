@@ -1,19 +1,13 @@
 import traceback
 import pdb
 
-# assert that var is of vartype
-def t(vartype, var):
-    #assert(type(var) == vartype)
-    if not type(var) == vartype:
-        raise Exception('variable "' + str(var) + '" is of type ' + 
-            str(type(var)) + ', not of type ' + str(vartype))
-    return var
 
-# use as a function decorator.  asserts function returns type vartype
-# example: @returns(int)
-#          def add_one(x):
-#              return int(x+1)
 def returns(vartype):
+    """ use as a function decorator.  asserts function returns type vartype
+        example: @returns(int)
+                 def add_one(x):
+                     return int(x+1)
+    """
     def wrapper(f):
         def wrapped(*args, **kwargs):
             output = f(*args, **kwargs)
@@ -26,12 +20,12 @@ def returns(vartype):
         return wrapped
     return wrapper
 
-
-# use as a function decorator.  asserts parapeters of specified length & type
-# (does not require you specify all kwarg types)
-# example: @takes(int,str,x=int,y=int)
-#          def f(a,b,x=0,y=0,z=0):
 def takes(*args_types, **kwargs_types):
+    """ Use as a function decorator. asserts params of specified length & type
+    (does not require you specify all kwarg types)
+    example: @takes(int,str,x=int,y=int)
+             def f(a,b,x=0,y=0,z=0):
+    """
     def wrapper(f):
         def wrapped(*args, **kwargs):
             error = False
@@ -65,11 +59,10 @@ def takes(*args_types, **kwargs_types):
         return wrapped
     return wrapper
 
-
-
-# acts like print, but also prints code context it was called from
-# usage: dprint(x+2): <'dprint: file file.py, function f, line 0:\n 'x+2' --> 5>
 def dprint(var):
+    """ acts like print, but also prints code context it was called from
+    usage: dprint(x+2): <'dprint: file file.py, function f, line 0:\n 'x+2'-->5>
+    """
     stack = traceback.extract_stack()
     filename, lineno, function_name, code = stack[-2]
     print('dprint: file "'+filename+'", function "'+function_name
@@ -81,10 +74,10 @@ def dprint(var):
         r_index = code.rindex(')')
         print('\t"'+code[l_index : r_index]+'" --> '+str(var))
 
-
-# assert that exp :: bool.  If exp is false, then print code context it was 
-# called from and start pdb
 def assertd(exp):
+    """ assert that exp is of type bool.  If exp is false, then print code
+    context it was called from, then start pdb.
+    """
     assert(isinstance(exp, bool))
     if not exp:
         stack = traceback.extract_stack()
@@ -97,3 +90,54 @@ def assertd(exp):
             print('\t"'+code[l_index : r_index]+'" --> False')
         print('starting pdb...')
         pdb.set_trace()
+
+
+class StaticTypeHolder(object):
+    """ Creates an object with method typeof(key, keytype).  
+    Once it is called, the instance asserts that type of self.key is always keytype
+    """
+    def __init__(self):
+        object.__setattr__(self, 'keytypes', {})
+
+    def typeof(self, key, keytype):
+        assert(isinstance(key, str))
+        assert(isinstance(keytype, type))
+        if hasattr(self, key):
+            if not isinstance(eval('self.'+key), keytype):
+                raise Exception('self.'+key+' already exists and is of type '+str(type(eval('self.'+key))))
+        self.keytypes[key] = keytype
+
+    def remove_typeof(self, key):
+        assert(isinstance(key, str))
+        if key in self.keytypes:
+            del self.keytypes[key]
+        else:
+            raise Exception(key+' does not have a specified type.')
+
+    def __setattr__(self, key, val):
+        if key in self.keytypes:
+            if not isinstance(val, self.keytypes[key]):
+                raise Exception('self.'+key+' specified as type '+str(self.keytypes[key])+' but attempted to assign type '+str(type(val))+' with value: '+str(val))
+        object.__setattr__(self, key, val)
+
+    def __getattribute__(self, key):
+        val = object.__getattribute__(self, key)
+        if key in object.__getattribute__(self, 'keytypes'):
+            if not isinstance(val, self.keytypes[key]):
+                raise Exception('self.'+key+' specified as type '+str(self.keytypes[key])+' but holds type '+str(type(val))+' with value: '+str(val))
+            assert(isinstance(val, self.keytypes[key]))
+        return val
+
+    def __delattr__(self, key):
+        if key in self.keytypes:
+            del self.keytypes[key]
+        object.__delattr__(self, key)
+
+    def __str__(self):
+        string = "StaticTypeHolder:"
+        for key in self.keytypes:
+            string += '\nself.'+key+' specified as type '+str(self.keytypes[key])
+            if hasattr(self, key):
+                string += '\n\tself.'+key+' = '+str(eval('self.'+key))
+        return string
+
