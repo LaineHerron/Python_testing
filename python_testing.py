@@ -16,9 +16,10 @@ def returns(vartype):
                                 +str(vartype)+' but returned type '
                                 +str(type(output))+' with value: '
                                 +str(output))
-            return t(vartype, output)
+            return output
         return wrapped
     return wrapper
+
 
 def takes(*args_types, **kwargs_types):
     """ Use as a function decorator. asserts params of specified length & type
@@ -59,6 +60,29 @@ def takes(*args_types, **kwargs_types):
         return wrapped
     return wrapper
 
+
+def print_enter_exit(print_vars=True):
+    """ use as a function decorator. Prints when the function is called and
+    when it returns.  if print_vars == True, then prints arguments, and result
+    """
+    def wrapper(f):
+        def wrapped(*args, **kwargs):
+            filename, lineno, _, _ = traceback.extract_stack()[-2]
+            print('%s called from file %s line #%s' % (str(f), filename, lineno))
+            if print_vars:
+                for i in range(len(args)):
+                    print('| argument#%s->%s' % (str(i), str(args[i])))
+                for key in kwargs:
+                    print('| kwarg %s -> %s' % (str(key), str(kwargs[key])))
+            output = f(*args, **kwargs)
+            print('exited %s (called from file %s line #%s)' % (str(f), filename, lineno))
+            if print_vars:
+                print('| returned: %s' % str(output))
+            return output
+        return wrapped
+    return wrapper
+
+
 def dprint(var):
     """ acts like print, but also prints code context it was called from
     usage: dprint(x+2): <'dprint: file file.py, function f, line 0:\n 'x+2'-->5>
@@ -74,6 +98,7 @@ def dprint(var):
         r_index = code.rindex(')')
         print('\t"'+code[l_index : r_index]+'" --> '+str(var))
 
+
 def assertd(exp):
     """ assert that exp is of type bool.  If exp is false, then print code
     context it was called from, then start pdb.
@@ -87,7 +112,7 @@ def assertd(exp):
         if code != None: # if not running from python shell
             l_index = code.index('assertd(')+8
             r_index = code.rindex(')')
-            print('\t"'+code[l_index : r_index]+'" --> False')
+            print('\t"'+code[l_index : r_index])
         print('starting pdb...')
         pdb.set_trace()
 
@@ -145,4 +170,5 @@ class StaticTypeHolder(object):
             if hasattr(self, key):
                 string += '\n\tself.'+key+' = '+str(eval('self.'+key))
         return string
+
 
