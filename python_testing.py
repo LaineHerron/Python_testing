@@ -120,6 +120,11 @@ def assertd(exp):
 class StaticTypeHolder(object):
     """ Creates an object with method typeof(key, keytype). Once it is 
     called, the instance asserts that type of self.key is always keytype
+    Example Usage:
+        T = StaticTypeHolder()
+        T.typeof("int_var", int)
+        T.int_var = 42
+        T.int_var = "42"  # raises exception
     """
     def __init__(self):
         object.__setattr__(self, 'keytypes', {})
